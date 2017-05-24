@@ -12,6 +12,8 @@ import eyed3
 
 debug = False
 
+audio_file_re = re.compile(".+\.(?P<extension>mp3|m4a)$", re.IGNORECASE)
+
 
 class CollatorFile():
     """
@@ -20,17 +22,24 @@ class CollatorFile():
     """
     fname = None
     hash = None
+    audiofile = None
+    ext = None
 
     def __init__(self, fname):
         self.fname = fname
+        self.basename = os.path.basename(self.fname)
         self.hash = self.generate_hash()
         self.audiofile = eyed3.load(self.fname)
+
+        mo = audio_file_re.match(self.basename)
+        if mo:
+            self.ext = mo.group("extension")
 
     def __str__(self):
         ret = "Title: {0}, Artist: {1}, Album: {2}".format(os.path.basename(self.fname),
                                                            self.path_artist,
                                                            self.path_album)
-        ret += "\nTitle Tag: {0}".format(self.title_tag)
+        ret += "\nTitle Tag: {0} ({1})".format(self.title_tag, self.ext)
         ret += "\nAlbum Tag: {0}".format(self.album_tag)
         ret += "\nArtist Tag: {0}".format(self.artist_tag)
         return ret
@@ -95,13 +104,7 @@ class CollatorFile():
         of the file name.
         :return: 
         """
-        ret = False
-        iaf_re = re.compile(".+\.(mp3|m4a)$", re.IGNORECASE)
-        mo = iaf_re.match(os.path.basename(self.fname))
-        if (mo):
-            ret = True
-
-        return ret
+        return self.ext is not None
 
     def path_elements(self):
         return self.fname.split('/')
